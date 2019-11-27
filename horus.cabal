@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 12c543a34eb1131c298b2715fd8462fe043979eb6a8272339a896cf7c2a84ac7
+-- hash: 25e03db611a7ea626d2116e5eab31c0ff244d9fc7726ea4b1b5f6b54cc53fa6f
 
 name:           horus
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Type.SType
   other-modules:
       Paths_horus
   hs-source-dirs:
