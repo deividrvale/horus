@@ -1,10 +1,10 @@
 name:                horus
 version:             0.1.0.0
-github:              "githubuser/horus"
+github:              "deividrvale/horus"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2019 Author name here"
+author:              "Deivid Vale"
+maintainer:          "deividrodriguesvale@gmail.com"
+copyright:           "2019 Deivid Vale"
 
 extra-source-files:
 - README.md
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/horus#readme>
+description:         Please see the README on GitHub at <https://github.com/deividrvale/horus#readme>
 
 dependencies:
 - base >= 4.7 && < 5
