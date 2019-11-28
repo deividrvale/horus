@@ -2,18 +2,8 @@ module Type.SType where
 
     -- For now, simple types are just Haskell data types.
     data Type = Base String | Arrow Type Type
+        deriving (Eq, Show)
 
-    -- Type class to define equality between basic types.
-    class TypeEq a where
-        isEqual :: a -> a -> Bool
-
-
-
-
-    -- instance TypeEq Base where
-    --     isEqual Base "" Base "" = True
-
-    -- testType :: Type -> String
-    -- testType (Base "") = "Tipo vazio"
-    -- testType (Base zl) = "teste"
-    -- testType (Arrow x y) = "x"
+    typeOrder :: Type -> Int
+    typeOrder (Base _)      = 0
+    typeOrder (Arrow x y)   = maximum [typeOrder x + 1, typeOrder y]
