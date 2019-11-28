@@ -3,6 +3,7 @@ module Lib
     ) where
 
 import qualified Type.SType as TYPE
+import qualified Terms.ATerms as Terms
 
 someFunc :: IO ()
 someFunc = print arrow
@@ -13,4 +14,3 @@ arrow = TYPE.Arrow natList natList
 arrow2 = TYPE.Arrow (TYPE.Arrow arrow natType) natType
 
 test = TYPE.typeOrder natType
-
