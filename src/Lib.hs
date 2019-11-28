@@ -2,7 +2,7 @@ module Lib
     ( someFunc
     ) where
 
-import Type.SType as TYPE
+import qualified Type.SType as TYPE
 
 someFunc :: IO ()
 someFunc = print arrow
