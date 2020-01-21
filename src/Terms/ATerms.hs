@@ -1,27 +1,39 @@
 module Terms.ATerms where
     import qualified Type.SType as TYPE
 
-    -- data FSymbol = FArity String TYPE.Type
-    -- deriving (Eq, Show)
-
     data Term = VarCons String Int TYPE.Type | FcSymbol String TYPE.Type | AppCons Term Term TYPE.Type
         deriving (Eq, Show)
 
-    -- data TipoTeste (x:: int) = Cons1 String x | Cons2 (TipoTeste x)
-
-    -- | Instantiate a new variable with the initial index.
-    -- This is the eta-reduced version of the function, it returns a function
+    -- | Instantiate a new typed variable with the initial index.
     newVar :: String -> TYPE.Type -> Term
     newVar name = VarCons name 0
 
     -- | Rename all variables in a term by increasing it's index.
     renameVar :: Term -> Term
-    renameVar var = case var of
-        VarCons name i tp -> VarCons name (i + 1) tp
-        FcSymbol name tp -> FcSymbol name tp
-        AppCons s1 s2 tp -> AppCons (renameVar s1) (renameVar s2) tp
+    renameVar term = case term of
+        VarCons name i t -> VarCons name (i + 1) t
+        FcSymbol name t -> FcSymbol name t
+        AppCons s1 s2 t -> AppCons (renameVar s1) (renameVar s2) t
+
+    -- | The creation of full applied functions from a function symbol.
+
+    buildApp :: Term -> Term
+
+    buildApp (FcSymbol name t) = case t of
+        (TYPE.Base _) -> FcSymbol name t
+        (TYPE.Arrow t1 t2) -> buildApp (AppCons (FcSymbol name t) (newVar "x" t1) t2)
+
+    buildApp (AppCons s t tp) = case tp of
+        (TYPE.Base n) -> (AppCons s t tp)
+        (TYPE.Arrow t1 t2) -> buildApp (AppCons (AppCons s t tp) (newVar "y" t1) t2)
 
 
+
+
+
+
+
+    -- Implementation of TypeCheck Class
     instance TYPE.TypeCheck Term where
         isValid (VarCons _ _ _) = True
         isValid (FcSymbol _ _)  = True
@@ -47,6 +59,4 @@ module Terms.ATerms where
         axRule exp = case exp of
             VarCons _ _ vType -> vType
             FcSymbol _ fcType -> fcType
-
-    -- appRule t1 t2 = case t1 of
 

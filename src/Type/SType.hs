@@ -26,3 +26,10 @@ module Type.SType where
         isValid  :: exp -> Bool
         axRule   :: exp -> Type
         -- appRule  :: exp -> exp -> Type
+
+    hugeArrow :: Type -> Integer -> Type
+
+    hugeArrow t 0 = t
+    hugeArrow (Base name) n = hugeArrow (Arrow (Base name) (Base name)) (n - 1)
+    hugeArrow (Arrow t1 t2) n = case t1 of
+        Base name -> hugeArrow (Arrow (Base name) (Arrow t1 t2)) (n - 1)

@@ -6,23 +6,25 @@ import qualified Type.SType as TYPE
 import qualified Terms.ATerms as TERMS
 
 someFunc :: IO ()
-someFunc = print (TYPE.typeArity arrow2)
+someFunc = print testbuild
 
-natType = TYPE.Base "nat"
+nat = TYPE.Base "nat"
 natList = TYPE.Base "natlist"
 arrow = TYPE.Arrow natList natList
-arrow2 = TYPE.Arrow (TYPE.Arrow arrow natType) natType
+arrow2 = TYPE.Arrow (TYPE.Arrow arrow nat) nat
 
+x = TERMS.newVar "Y" (TYPE.Arrow nat (TYPE.Arrow nat nat))
+y = TERMS.newVar "X" nat
 
+appTerm = TERMS.AppCons x y (TYPE.Arrow nat nat)
 
-x = TERMS.newVar "Y" (TYPE.Arrow natType (TYPE.Arrow natType natType))
-y = TERMS.newVar "X" natType
+f = TERMS.FcSymbol "f" (TYPE.Arrow nat nat)
+zero = TERMS.FcSymbol "0" nat
 
-appTerm = TERMS.AppCons x y (TYPE.Arrow natType natType)
+testTerm = TERMS.AppCons f zero (TYPE.Arrow nat nat)
 
-f = TERMS.FcSymbol "f" (TYPE.Arrow natType (TYPE.Arrow natType natType))
-zero = TERMS.FcSymbol "0" natType
+hugeType = TYPE.hugeArrow nat (9^9)
 
-testTerm = TERMS.AppCons f zero (TYPE.Arrow natType natType)
+functionOfHugeType = TERMS.FcSymbol "f" hugeType
 
-validTerm = TYPE.isValid testTerm
+testbuild = TERMS.buildApp functionOfHugeType
