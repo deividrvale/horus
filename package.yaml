@@ -4,7 +4,7 @@ github:              "deividrvale/horus"
 license:             BSD3
 author:              "Deivid Vale"
 maintainer:          "deividrodriguesvale@gmail.com"
-copyright:           "2019 Deivid Vale"
+copyright:           "2020 Deivid Vale"
 
 extra-source-files:
 - README.md
@@ -21,6 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/deiv
 
 dependencies:
 - base >= 4.7 && < 5
+- z3
+- containers
 
 library:
   source-dirs: src

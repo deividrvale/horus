@@ -1,0 +1,4 @@
+module Algebra.Polynomial where
+{-|
+
+-}

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: db609f7b31a18f0109c32d47ebe570ceb3f761f098326944b1fb29f4da5eff39
+-- hash: fa447168650a4d7635243fd9e69f45bc659bd9cb9fb67fe74b08e8cc45edbb74
 
 name:           horus
 version:        0.1.0.0
@@ -13,7 +13,7 @@ homepage:       https://github.com/deividrvale/horus#readme
 bug-reports:    https://github.com/deividrvale/horus/issues
 author:         Deivid Vale
 maintainer:     deividrodriguesvale@gmail.com
-copyright:      2019 Deivid Vale
+copyright:      2020 Deivid Vale
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -27,8 +27,11 @@ source-repository head
 
 library
   exposed-modules:
+      Algebra.Polynomial
+      Interpretation.Polynomial
       Lib
-      Terms.ATerms
+      Rewriting.ARewriting
+      Term.ATerm
       Type.SType
   other-modules:
       Paths_horus
@@ -36,6 +39,8 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , containers
+    , z3
   default-language: Haskell2010
 
 executable horus-exe
@@ -47,7 +52,9 @@ executable horus-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , horus
+    , z3
   default-language: Haskell2010
 
 test-suite horus-test
@@ -60,5 +67,7 @@ test-suite horus-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , horus
+    , z3
   default-language: Haskell2010
