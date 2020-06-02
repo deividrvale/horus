@@ -6,23 +6,13 @@ import qualified Type.SType as Type
 import qualified Term.ATerm as Term
 import qualified Data.Set as SET
 import qualified Rewriting.ARewriting as Rw
-import qualified Interpretation.Polynomial as I
 
 someFunc :: IO ()
 someFunc = do
-    -- putStrLn "Testing Arithmetic Rewriting . . ."
-    -- putStr "Instantiating the base type set: "
-
-    -- let baseSet = Type.createSortSet [nat]
-    -- print baseSet
-
-    -- putStr "Instantiating a signature set: "
-    -- let sign = Term.createSignature [zero, succesor, plus, double, times]
-    -- print sign
-
-    putStrLn "Check the rule x + 0 -> x: "
-
+    putStrLn "Check the rule x + 0 -> x:"
     print (Type.typeOrder strangetype)
+
+-- Testing types and rules.
 
 -- Base type
 nat = Type.Base "nat"
