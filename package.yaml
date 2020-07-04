@@ -1,7 +1,7 @@
 name:                horus
-version:             0.1.0.0
+version:             0.0.0.1
 github:              "deividrvale/horus"
-license:             BSD3
+license:             MIT
 author:              "Deivid Vale"
 maintainer:          "deividrodriguesvale@gmail.com"
 copyright:           "2020 Deivid Vale"
@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - z3
 - containers
+- hie-bios
 
 library:
   source-dirs: src

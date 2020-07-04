@@ -10,6 +10,7 @@ module Term.ATerm (
     ) where
     import qualified Type.SType as TYPE
     import qualified Data.Set as SET
+    import qualified Type.SimpleTypes as ST
 
     data Term = VarCons String Int TYPE.Type | FcSymbol String TYPE.Type | AppCons Term Term TYPE.Type
         deriving (Eq, Show, Ord)
@@ -62,7 +63,6 @@ module Term.ATerm (
     --         SET.union (getSubTerms' t1 (SET.insert t1 set)) (getSubTerms' t2 (SET.insert t2 set))
     --         else
     --             SET.empty
-
 
     -- | Build a signature from a list of terms ignoring other terms that is not a function symbol.
     createSignature' :: [Term] -> SET.Set Term -> SET.Set Term

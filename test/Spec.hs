@@ -1,5 +1,6 @@
-import Lib
+import qualified UnitTest.AFS as AFS
 
 main :: IO ()
 main = do
-    putStrLn "Testing Some First Order Rewriting Rules"
+    putStrLn "Executing Unit Test for AFS Terms. \n"
+    AFS.assertAFS
