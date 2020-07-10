@@ -76,7 +76,7 @@ module Type.SimpleTypes (
 
     -- | Every simple typed term should implement this class.
     class SimpleTypedCurry term where
-        -- | Axioma function defines the most basic term structure such that the assignment t : Type is true.
+        -- | Axiom function defines the most basic term structure such that the assignment t : Type is true.
         axiom :: Assignment term -> Bool
         assignType :: term -> Type -> Assignment term
         insertIntoContext :: Assignment term -> Context term

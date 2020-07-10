@@ -66,17 +66,11 @@ module Term.AFS (
 
     abs :: Term -> Term -> Term
     abs x t = case x of
-        Var name -> case t of
-            c@(FApp (FSymbol _ tp) _) -> if ST.isBasic tp then Abs name c else undefined
-            -- TODO/URGENT: Expand this function to accept fully applied terms, like \x -> s(x).
-            -- This is possible by checking the type of t.
-            _ -> Abs name t
-        _ -> error "Fatal Error: Only variables can be abstracted. \n Please check the first argument of abs, it need to be a variable term."
-
+        Var name -> Abs name t
+        _ -> error "Fatal Error: Only variables can be abstracted. \n Please check the first argument of abs."
 
     fApp :: FSymbol -> [Term] -> Term
     fApp = FApp
 
     symbol :: String -> ST.Type -> FSymbol
     symbol = FSymbol
-

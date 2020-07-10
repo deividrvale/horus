@@ -5,21 +5,33 @@ import qualified Term.AFS                      as AFS
 
 assertAFS :: IO ()
 assertAFS = do
-    putStrLn "Creating natural number signature..."
+    putStrLn "Creating natural numbers signature..."
     print nat
--- Create Symbol Types
+    print natnat
+    print suc
+    putStrLn "Printing some terms built with that signature..."
+    print x
+    print sucx
+    print app
+    print abst
+    print abst2
+
+-- Basic Types Declaration
 nat = ST.newBasicType "nat"
 natnat = ST.newArrowType nat nat
 
-x = AFS.var "x"
+-- Signature Function Symbols
+suc = AFS.symbol "suc" natnat
 zeroSignature = AFS.symbol "0" nat
 
-s = AFS.symbol "s" natnat
-
+-- Terms
+x = AFS.var "x" -- a variable.
 zeroTerm = AFS.fApp zeroSignature []
 
-sx = AFS.fApp s [x,x]
+sucx = AFS.fApp suc [x,x]
 
 app = AFS.app x x
 
-abst = AFS.abs x zeroTerm
+abst = AFS.abs x x
+
+abst2 = AFS.abs x abst

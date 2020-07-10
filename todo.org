@@ -1,0 +1,7 @@
+* TODO
+** Define a clear API for the project.
+** Start with the use of semantic versioning.
+*** It is specified in https://semver.org
+* IN PROGRESS
+
+* DONE

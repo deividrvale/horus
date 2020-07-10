@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5153d99f288fc30c2412a0aa40e3e866a97db45513495f47c48bb71ac1018e3a
+-- hash: 5eabb327b80b972a9ca36e1dd1ef2ab4901c4d1d4b8809ab077451c477c2b974
 
 name:           horus
-version:        0.0.0.1
+version:        0.1.0
 description:    Please see the README on GitHub at <https://github.com/deividrvale/horus#readme>
 homepage:       https://github.com/deividrvale/horus#readme
 bug-reports:    https://github.com/deividrvale/horus/issues
