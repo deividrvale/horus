@@ -17,35 +17,35 @@ import qualified Term.AFS as AFS
 
 assertAFS :: IO ()
 assertAFS = do
-    putStrLn "Creating natural numbers signature..."
+    putStrLn "\nTesting AFS Terms"
+    putStrLn "\nDeclaring base types:"
     print nat
-    print natnat
+    print list
+    putStrLn "Declaring signature symbols:"
+    print zero
     print suc
-    putStrLn "Printing some terms built with that signature..."
-    print x
-    print sucx
-    print app
-    print abst
-    print abst2
-    putStrLn "Declare axiomatic types."
-    print xas
-    print zeroAs
+    print add
+    putStrLn "Initialing new Type Context:"
+    print ctx
+    print $ ST.typeChecking ctx y nat
 
--- Basic Types Declaration
-nat :: ST.Type
 
+-- Base Types Declarations
 nat = ST.newBasicType "nat"
-natnat :: ST.Type
-natnat = ST.newArrowType nat nat
+list = ST.newBasicType "list"
 
 -- Signature Function Symbols
-suc = AFS.symbol "suc" natnat
+zero = AFS.symbol "0" nat
+suc = AFS.symbol "suc" (ST.newArrowType nat nat)
+add = AFS.symbol "add" (ST.newArrowType nat (ST.newArrowType nat nat))
 
-zeroSig = AFS.symbol "0" nat
+-- Empty Context.
+ctx = ST.initCtx xas
 
 -- Terms
 x = AFS.var "x" -- a variable.
-zero = AFS.const zeroSig
+y = AFS.var "y"
+zeroTerm = AFS.const zero
 
 sucx = AFS.fApp suc [x, x]
 
@@ -57,4 +57,4 @@ abst2 = AFS.abs x abst
 
 -- Declaring variables types
 xas = ST.declareType x nat
-zeroAs = ST.declareType zero nat
+zeroAs = ST.declareType zeroTerm nat

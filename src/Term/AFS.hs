@@ -18,6 +18,7 @@ module Term.AFS
     Term.AFS.const,
     Term.AFS.abs,
     fApp,
+    typeChecking,
   )
 where
 
@@ -82,7 +83,12 @@ const c = fApp c []
 
 -- Implementation of Simple Types type class
 instance SimpleTypedCurry Term where
-  axiom ctx asgn = ST.member asgn ctx
-  declareType s@(Var _) t = ST.newAssignment s t -- TODO: Why this black magic works!
-  declareType s@(FApp _ []) t = ST.newAssignment s t
-  declareType _ _ = error "Fatal Error: Type declaration are only possible for variables and constants."
+    axiom ctx asgn = ST.member asgn ctx
+
+    declareType s@(Var _) t = ST.newAssignment s t
+    declareType s@(FApp _ []) t = ST.newAssignment s t
+    declareType _ _ = error "Fatal Error: Type declaration are only possible for variables and constants."
+
+    typeChecking ctx v@(Var x) tp = case ST.getType ctx v of
+        Nothing -> Left False
+        Just tp' -> undefined
