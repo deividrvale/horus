@@ -8,7 +8,7 @@ assertST :: IO ()
 assertST = do
     putStrLn "\nUnit Testing Curry ST"
     print eq'
-    print (ST.unifEq (ST.UnifPrb eq' []))
+    print (ST.solveEq (ST.UnifPrb eq' []))
 
 -- Basic types.
 nat = ST.newBasicType "nat"

@@ -20,6 +20,7 @@ module Type.SimpleTypes (
 
     -- * Abstraction: Type
     newVarType,
+    freshTypeVar,
     newBasicType,
     newArrowType,
     isBasic,
@@ -27,6 +28,7 @@ module Type.SimpleTypes (
 
     -- * Abstraction: Unification
     unifEq,
+    solveEq,
 
     -- * Abstraction: Assignment
     newAssignment,
@@ -42,6 +44,7 @@ module Type.SimpleTypes (
 ) where
 
 import qualified Data.Set as Set
+import qualified Data.IntSet as IntSet
 
 -- | Type name.
 -- Type variables are identified uniquely by their name.
@@ -84,6 +87,18 @@ newBasicType = Base
 -- | Instantiate a new arrow-type.
 newArrowType :: Type -> Type -> Type
 newArrowType = Arrow
+
+-- | Get the set of type-variables occuring in a type.
+var :: Type -> IntSet.IntSet
+var t = case t of
+    Var name -> IntSet.singleton name
+    Base _ -> IntSet.empty
+    Arrow l r -> IntSet.union (var l) (var r)
+
+-- | Generate a new fresh type variable.
+freshTypeVar :: Type -> Type
+freshTypeVar t = if IntSet.null $ var t then Var 1
+    else Var ((IntSet.findMax $ var t) + 1)
 
 -- | Return type's order.
 order :: Type -> Int
@@ -133,10 +148,7 @@ type Subst = [(Name, Type)]
 
 -- | Check if a name occurs in the type t.
 nameOccurs :: Name -> Type -> Bool
-nameOccurs name tp = case tp of
-    Var x -> x == name
-    Base _ -> False
-    Arrow tp1 tp2 -> (nameOccurs name tp1) || (nameOccurs name tp2)
+nameOccurs name tp = IntSet.member name (var tp)
 
 -- | Check if a name is on substitution domain.
 inDomain :: Name -> Subst -> Bool
@@ -194,6 +206,13 @@ unifEq unif@(UnifPrb prb sol) = case prb of
     -- Decompose
     (l@(Arrow a b), r@(Arrow c d)) : tl -> if l == r then unifEq (UnifPrb tl sol)
         else unifEq $ UnifPrb ((a,c) : (b,d) : tl) sol
+
+solveEq :: UnifPrb -> Maybe Subst
+solveEq prb = case unifEq prb of
+    Fail -> Nothing
+    UnifPrb [] umg -> pure (map toSubst) <*> Just umg
+        where toSubst (Var name, tp) =  (name, tp)
+    UnifPrb _ _ -> error "Fatal Error: Unification procedure fails. Please check the unification implementation on SimpleTypes module."
 
 -- Class section.
 

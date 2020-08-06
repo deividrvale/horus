@@ -19,6 +19,7 @@ module Term.AFS
     Term.AFS.abs,
     fApp,
     typeChecking,
+    genTypeEq
   )
 where
 
@@ -92,3 +93,14 @@ instance SimpleTypedCurry Term where
     typeChecking ctx v@(Var x) tp = case ST.getType ctx v of
         Nothing -> Left False
         Just tp' -> undefined
+
+genTypeEq :: Context Term -> Term -> Type -> Maybe ([(Type, Type)])
+genTypeEq ctx v@(Var x) tp = (\t -> [(tp, t)]) <$> ST.getType ctx v
+
+genTypeEq ctx (App m n) tp = (++) <$> genTypeEq ctx m (ST.newArrowType fname tp) <*> genTypeEq ctx n fname
+    where fname = ST.freshTypeVar tp
+
+genTypeEq ctx (Abs name m) tp = (++) <$> genTypeEq ctx' m fname2 <*> pure [(ST.newArrowType fname1 fname2, tp)]
+    where fname1 = ST.freshTypeVar tp
+          fname2 = ST.freshTypeVar fname1
+          ctx' = ST.add (ST.declareType (Var name) fname1) ctx

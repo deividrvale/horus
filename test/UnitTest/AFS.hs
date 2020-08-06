@@ -25,14 +25,17 @@ assertAFS = do
     print zero
     print suc
     print add
-    putStrLn "Initialing new Type Context:"
+    putStr "Initialing new Type Context:"
     print ctx
-    print $ ST.typeChecking ctx y nat
+    putStrLn "Generating experimental type equations."
+    eq <- return $ AFS.genTypeEq ctx abst a
+    print eq
 
 
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
 list = ST.newBasicType "list"
+a = ST.newBasicType "A"
 
 -- Signature Function Symbols
 zero = AFS.symbol "0" nat
@@ -40,21 +43,23 @@ suc = AFS.symbol "suc" (ST.newArrowType nat nat)
 add = AFS.symbol "add" (ST.newArrowType nat (ST.newArrowType nat nat))
 
 -- Empty Context.
-ctx = ST.initCtx xas
+ctx = ST.add yas (ST.initCtx xas)
 
 -- Terms
 x = AFS.var "x" -- a variable.
 y = AFS.var "y"
+z = AFS.var "z"
 zeroTerm = AFS.const zero
 
 sucx = AFS.fApp suc [x, x]
 
-app = AFS.app x x
+app = AFS.app x (AFS.app x y)
 
-abst = AFS.abs x x
+abst = AFS.abs (AFS.var "u") (AFS.var "u")
 
 abst2 = AFS.abs x abst
 
 -- Declaring variables types
-xas = ST.declareType x nat
+xas = ST.declareType x (ST.newArrowType nat nat)
+yas = ST.declareType y nat
 zeroAs = ST.declareType zeroTerm nat
