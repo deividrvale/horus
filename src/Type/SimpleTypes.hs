@@ -16,6 +16,7 @@ module Type.SimpleTypes (
     Assignment,
     Context,
     Judgment,
+    TypeEq,
     UnifPrb(..),
 
     -- * Abstraction: Type
@@ -24,6 +25,7 @@ module Type.SimpleTypes (
     newBasicType,
     newArrowType,
     isBasic,
+    order,
     nameOccurs,
 
     -- * Abstraction: Unification
@@ -112,6 +114,9 @@ newAssignment = Assignment
 -- | Instantiate a empty context.
 initCtx :: (SimpleTypedCurry term, Ord term) => Assignment term -> Context term
 initCtx assg = Context (Set.singleton assg)
+
+-- | Return the domain of a context.
+
 
 -- | Add an assignment to a context.
 add :: (SimpleTypedCurry term, Ord term) => Assignment term -> Context term -> Context term

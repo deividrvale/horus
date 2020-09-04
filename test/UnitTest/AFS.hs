@@ -25,22 +25,27 @@ assertAFS = do
     print zero
     print suc
     print add
-    putStr "Initialing new Type Context:"
-    print ctx
-    putStrLn "Generating experimental type equations."
-    eq <- return $ AFS.genTypeEq ctx abst a
-    print eq
-
+    print addxy -- test finding a type for this term.
+    -- putStr "Initialing new Type Context:"
+    -- print ctx
+    -- putStrLn "Generating experimental type equations."
+    -- eq <- return $ AFS.genTypeEq ctx abst2 (ST.newVarType 1)
+    -- print eq
+    -- putStrLn "Solving equations using unification."
+    -- print $ ST.solveEq (genUnif eq)
 
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
 list = ST.newBasicType "list"
 a = ST.newBasicType "A"
 
+-- Basic functional type declarations
+natnat = ST.newArrowType nat nat
+
 -- Signature Function Symbols
-zero = AFS.symbol "0" nat
-suc = AFS.symbol "suc" (ST.newArrowType nat nat)
-add = AFS.symbol "add" (ST.newArrowType nat (ST.newArrowType nat nat))
+zero = AFS.const "zero" nat
+suc = AFS.symbol "suc" [nat] nat
+add = AFS.symbol "add" [nat, nat] nat
 
 -- Empty Context.
 ctx = ST.add yas (ST.initCtx xas)
@@ -49,17 +54,23 @@ ctx = ST.add yas (ST.initCtx xas)
 x = AFS.var "x" -- a variable.
 y = AFS.var "y"
 z = AFS.var "z"
-zeroTerm = AFS.const zero
 
-sucx = AFS.fApp suc [x, x]
+sucx = AFS.fApp suc [x]
+addxy = AFS.fApp add [abst,abst2]
+doubleVar = AFS.abs x sucx
 
 app = AFS.app x (AFS.app x y)
 
 abst = AFS.abs (AFS.var "u") (AFS.var "u")
 
-abst2 = AFS.abs x abst
+abst2 = AFS.abs x (AFS.abs y x)
 
 -- Declaring variables types
-xas = ST.declareType x (ST.newArrowType nat nat)
+xas = ST.declareType x nat
 yas = ST.declareType y nat
-zeroAs = ST.declareType zeroTerm nat
+
+-- | Get a list of equations and generate a unification problem to be solved.
+genUnif :: Maybe [(ST.Type, ST.Type)] -> ST.UnifPrb
+genUnif meq = case meq of
+    Nothing -> ST.Fail
+    Just eqs -> ST.UnifPrb eqs []
