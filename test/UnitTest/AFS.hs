@@ -14,6 +14,7 @@ module UnitTest.AFS where
 
 import qualified Type.SimpleTypes as ST
 import qualified Term.AFS as AFS
+import qualified Data.Set as Set
 
 assertAFS :: IO ()
 assertAFS = do
@@ -25,15 +26,9 @@ assertAFS = do
     print zero
     print suc
     print add
-    print addxy -- test finding a type for this term.
-    -- putStr "Initialing new Type Context:"
-    -- print ctx
-    -- putStrLn "Generating experimental type equations."
-    -- eq <- return $ AFS.genTypeEq ctx abst2 (ST.newVarType 1)
-    -- print eq
-    -- putStrLn "Solving equations using unification."
-    -- print $ ST.solveEq (genUnif eq)
-
+    putStrLn "Initializing new Type-Context:"
+    print ctx
+    print $ AFS.typeChecking ctx abst2 (ST.newVarType 1)
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
 list = ST.newBasicType "list"
@@ -46,14 +41,15 @@ natnat = ST.newArrowType nat nat
 zero = AFS.const "zero" nat
 suc = AFS.symbol "suc" [nat] nat
 add = AFS.symbol "add" [nat, nat] nat
+mapS = AFS.symbol "map" [natnat, nat] nat
 
--- Empty Context.
-ctx = ST.add yas (ST.initCtx xas)
+ctx = ST.add zas $ ST.add yas (ST.initCtx xas)
 
 -- Terms
 x = AFS.var "x" -- a variable.
 y = AFS.var "y"
 z = AFS.var "z"
+w = AFS.var "w"
 
 sucx = AFS.fApp suc [x]
 addxy = AFS.fApp add [abst,abst2]
@@ -63,14 +59,18 @@ app = AFS.app x (AFS.app x y)
 
 abst = AFS.abs (AFS.var "u") (AFS.var "u")
 
-abst2 = AFS.abs x (AFS.abs y x)
+abst2 = AFS.abs x (AFS.abs y (AFS.app x y))
+
+t1 = AFS.abs x (AFS.abs y (AFS.app x y))
+t2 = AFS.abs z (AFS.app (AFS.abs x x) (AFS.abs y y))
+
+betaT2 = AFS.abs z (AFS.abs y y)
+
+mapT = AFS.fApp mapS [(AFS.var "f"), (AFS.var "l")]
+
+omega = AFS.app (AFS.abs x (AFS.app x x)) (AFS.abs x (AFS.app x x))
 
 -- Declaring variables types
 xas = ST.declareType x nat
 yas = ST.declareType y nat
-
--- | Get a list of equations and generate a unification problem to be solved.
-genUnif :: Maybe [(ST.Type, ST.Type)] -> ST.UnifPrb
-genUnif meq = case meq of
-    Nothing -> ST.Fail
-    Just eqs -> ST.UnifPrb eqs []
+zas = ST.declareType z list
