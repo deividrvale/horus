@@ -25,14 +25,14 @@ assertAFS = do
     print zero
     print suc
     print add
-    print addxy -- test finding a type for this term.
-    -- putStr "Initialing new Type Context:"
-    -- print ctx
-    -- putStrLn "Generating experimental type equations."
-    -- eq <- return $ AFS.genTypeEq ctx abst2 (ST.newVarType 1)
-    -- print eq
-    -- putStrLn "Solving equations using unification."
-    -- print $ ST.solveEq (genUnif eq)
+    putStr "Initialing new Type Context:"
+    print ctx
+    putStrLn "Generating experimental type equations."
+    eq <- return $ AFS.genTypeEq ctx abst2 (ST.newVarType 1)
+    print eq
+    putStrLn "Solving type-equations using unification."
+    print $ ST.solveEq (genUnif eq)
+    -- print $ AFS.appSub (AFS.app x sucx) (x, sucx)
 
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
@@ -54,6 +54,7 @@ ctx = ST.add yas (ST.initCtx xas)
 x = AFS.var "x" -- a variable.
 y = AFS.var "y"
 z = AFS.var "z"
+w = AFS.var "w"
 
 sucx = AFS.fApp suc [x]
 addxy = AFS.fApp add [abst,abst2]
@@ -63,7 +64,7 @@ app = AFS.app x (AFS.app x y)
 
 abst = AFS.abs (AFS.var "u") (AFS.var "u")
 
-abst2 = AFS.abs x (AFS.abs y x)
+abst2 = AFS.abs z (AFS.abs w (AFS.app w z))
 
 -- Declaring variables types
 xas = ST.declareType x nat

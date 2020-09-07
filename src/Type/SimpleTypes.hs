@@ -1,6 +1,6 @@
 -- |
 --    Module      :  $Header$
---    Description :  Define simple types rules and type-checking.
+--    Description :  Define simple type rules and type-checking.
 --    Copyright   :  (c) Deivid Vale
 --    License     :  MIT
 --
@@ -8,7 +8,7 @@
 --    Stability   :  experimental
 --    Portability :  portable
 --
---    Defines simple types rules, type checking.
+--    Provide simple type rules and type checking.
 
 module Type.SimpleTypes (
      -- * Types
@@ -48,31 +48,53 @@ module Type.SimpleTypes (
 import qualified Data.Set as Set
 import qualified Data.IntSet as IntSet
 
--- | Type name.
--- Type variables are identified uniquely by their name.
+{--------------------------------------------------------------------
+  Datatypes
+--------------------------------------------------------------------}
+
+-- | Type-name. Simple type variables are identified uniquely by their name.
 type Name = Int
 
 -- | Simple types.
 data Type = Var Name | Base String | Arrow Type Type
     deriving (Eq, Ord)
 
-instance Show Type where
-    show (Var x) = show x
-    show (Base name) = name
-    show (Arrow t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")"
-
 -- | An assigment
 data Assignment term = Assignment term Type
     deriving (Eq, Ord)
 
-instance (Show a) => Show (Assignment a) where
-    show (Assignment a t) = show a ++ " :: " ++ show t
+-- | Type-equation.
+type TypeEq = (Type, Type)
+
+-- | Unification problem.
+data UnifPrb = Fail | UnifPrb [TypeEq] [TypeEq]
+    deriving (Show)
+
+-- Substitution.
+type Subst = [(Name, Type)]
 
 data Context exp = Empty | Context (Set.Set (Assignment exp) )
     deriving Show
 
 data Judgment exp = Judgment (Context exp) (Assignment exp)
 
+{--------------------------------------------------------------------
+  Datatype Instances
+--------------------------------------------------------------------}
+
+instance Show Type where
+    show (Var x) = show x
+    show (Base name) = name
+    show (Arrow t1 t2) = "(" ++ show t1 ++ " -> " ++ show t2 ++ ")"
+
+instance (Show a) => Show (Assignment a) where
+    show (Assignment a t) = show a ++ " :: " ++ show t
+
+{--------------------------------------------------------------------
+  Datatype Abstraction Layer
+--------------------------------------------------------------------}
+
+-- | Test if a type is basic.
 isBasic :: Type -> Bool
 isBasic x = case x of
     (Base _) -> True
@@ -90,6 +112,18 @@ newBasicType = Base
 newArrowType :: Type -> Type -> Type
 newArrowType = Arrow
 
+-- | Instantiate a new assignment
+newAssignment :: (SimpleTypedCurry term) => term -> Type -> Assignment term
+newAssignment = Assignment
+
+-- | Instantiate a new type-equation.
+newTypeEq :: Type -> Type -> TypeEq
+newTypeEq t1 t2 = (t1, t2)
+
+{--------------------------------------------------------------------
+  Basic Operations on Types
+--------------------------------------------------------------------}
+
 -- | Get the set of type-variables occuring in a type.
 var :: Type -> IntSet.IntSet
 var t = case t of
@@ -99,7 +133,7 @@ var t = case t of
 
 -- | Generate a new fresh type variable.
 freshTypeVar :: Type -> Type
-freshTypeVar t = if IntSet.null $ var t then Var 1
+freshTypeVar t = if IntSet.null (var t) then Var 1
     else Var ((IntSet.findMax $ var t) + 1)
 
 -- | Return type's order.
@@ -107,16 +141,17 @@ order :: Type -> Int
 order (Base _)      = 0
 order (Arrow x y)   = maximum [order x + 1, order y]
 
--- | Abstraction: Assignment
-newAssignment :: (SimpleTypedCurry term) => term -> Type -> Assignment term
-newAssignment = Assignment
+-- | Check if a name occurs in a type.
+nameOccurs :: Name -> Type -> Bool
+nameOccurs name tp = IntSet.member name (var tp)
+
+{--------------------------------------------------------------------
+  Basic Operations on Contexts
+--------------------------------------------------------------------}
 
 -- | Instantiate a empty context.
 initCtx :: (SimpleTypedCurry term, Ord term) => Assignment term -> Context term
 initCtx assg = Context (Set.singleton assg)
-
--- | Return the domain of a context.
-
 
 -- | Add an assignment to a context.
 add :: (SimpleTypedCurry term, Ord term) => Assignment term -> Context term -> Context term
@@ -126,11 +161,13 @@ add assg (Context ctx) = Context (Set.insert assg ctx)
 member ::  (SimpleTypedCurry term, Ord term) => Assignment term -> Context term -> Bool
 member asgn (Context ctx) = Set.member asgn ctx
 
--- | Check if an expression is part of an assignment.
+-- Auxiliary functions for getType.
+
+-- | Auxiliary: Check if an expression is part of an assignment.
 isEq :: (SimpleTypedCurry term, Eq term) => term -> Assignment term -> Bool
 isEq term (Assignment var tp) = term == var
 
--- | In an single element list of assignments return the type.
+-- | Auxiliary: Return the type in an single-element list of assignments.
 returnType :: [Assignment term] -> Maybe Type
 returnType [] = Nothing
 returnType ((Assignment _ tp) : []) = Just tp
@@ -139,23 +176,11 @@ returnType ((Assignment _ tp) : []) = Just tp
 getType :: (SimpleTypedCurry term, Ord term, Eq term) => Context term -> term -> Maybe Type
 getType (Context ctx) t = returnType (Set.toList $ Set.filter (isEq t) ctx)
 
--- Defining equations and dealing with type unification.
-type TypeEq = (Type, Type)
+{--------------------------------------------------------------------
+  Basic Operations with Substitutions.
+--------------------------------------------------------------------}
 
-newTypeEq :: Type -> Type -> TypeEq
-newTypeEq t1 t2 = (t1, t2)
-
-data UnifPrb = Fail | UnifPrb [TypeEq] [TypeEq]
-    deriving (Show)
-
--- Substitution on type names.
-type Subst = [(Name, Type)]
-
--- | Check if a name occurs in the type t.
-nameOccurs :: Name -> Type -> Bool
-nameOccurs name tp = IntSet.member name (var tp)
-
--- | Check if a name is on substitution domain.
+-- | Check if a name is in a substitution domain.
 inDomain :: Name -> Subst -> Bool
 inDomain name subst = case subst of
     [] -> False
