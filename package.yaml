@@ -24,6 +24,9 @@ dependencies:
 - z3
 - containers
 - hie-bios
+- mtl
+- process
+- repline >= 0.4
 
 library:
   source-dirs: src
@@ -47,7 +50,5 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -O2
-    - -v
     dependencies:
     - horus

@@ -1,6 +1,5 @@
 module Main where
-
-import Lib
+import Tools.REPL
 
 main :: IO ()
-main = someFunc
+main = repl

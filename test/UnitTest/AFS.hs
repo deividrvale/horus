@@ -35,7 +35,7 @@ assertAFS = do
     -- putStrLn "With MGU given by:"
     -- print $ ST.solveEq eq
     -- putStr ("The type of " ++ show term ++ " is: ")
-    -- print $ AFS.typeChecking ctx term (ST.newVarType 1)
+    print $ AFS.typeChecking ctx term (ST.newVarType 1)
 
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
