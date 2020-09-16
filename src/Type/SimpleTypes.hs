@@ -212,6 +212,7 @@ isEq term (Assignment var tp) = term == var
 returnType :: [Assignment term] -> Maybe Type
 returnType [] = Nothing
 returnType ((Assignment _ tp) : []) = Just tp
+returnType _ = error "Fatal Error: A context should not have two assignments for the same variable."
 -- ------------------------------------------------------------------
 
 -- | Get the type of a variable in a context.
@@ -219,7 +220,7 @@ getType :: (SimpleTypedCurry term, Ord term, Eq term) => Context term -> term ->
 getType (Context ctx) t = returnType (Set.toList $ Set.filter (isEq t) ctx)
 
 {--------------------------------------------------------------------
-  Basic Operations with Substitutions.
+  Basic Operations with type-substitutions.
 --------------------------------------------------------------------}
 
 -- | Check if a name is in a substitution domain.
@@ -300,4 +301,4 @@ solveEq xs = let prb = newUnif xs in
 class SimpleTypedCurry term where
     axiom :: Context term -> Assignment term -> Bool
     declareType :: term -> Type -> Assignment term
-    typeChecking :: Context term -> term -> Type -> Either Bool Type
+    typeChecking :: Context term -> term -> Type -> Maybe Type

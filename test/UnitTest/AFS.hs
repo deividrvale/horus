@@ -18,17 +18,25 @@ import qualified Data.Set as Set
 
 assertAFS :: IO ()
 assertAFS = do
-    putStrLn "\nTesting AFS Terms"
+    putStrLn "\nTesting AFS Terms ---------------------------"
     putStrLn "\nDeclaring base types:"
     print nat
     print list
-    putStrLn "Declaring signature symbols:"
+    putStrLn "\nDeclaring signature symbols:"
     print zero
     print suc
     print add
-    putStrLn "Initializing new Type-Context:"
-    print ctx
-    print $ AFS.typeChecking ctx abst2 (ST.newVarType 1)
+    putStrLn $ "\nInitializing new Type-Context: " ++ show ctx
+    term <- return $ abst
+    putStrLn $ "\nThe term under test is: " ++ show term
+    -- putStrLn "\nSolving equations for type assignment:"
+    -- eq <- return $ AFS.genTypeEq ctx term (ST.newVarType 1)
+    -- print eq
+    -- putStrLn "With MGU given by:"
+    -- print $ ST.solveEq eq
+    -- putStr ("The type of " ++ show term ++ " is: ")
+    -- print $ AFS.typeChecking ctx term (ST.newVarType 1)
+
 -- Base Types Declarations
 nat = ST.newBasicType "nat"
 list = ST.newBasicType "list"
@@ -51,24 +59,27 @@ y = AFS.var "y"
 z = AFS.var "z"
 w = AFS.var "w"
 
-sucx = AFS.fApp suc [x]
-addxy = AFS.fApp add [abst,abst2]
-doubleVar = AFS.abs x sucx
+f = AFS.var "f"
+l = AFS.var "l"
 
-app = AFS.app x (AFS.app x y)
+-- sucx = AFS.fApp suc [x]
+-- addxy = AFS.fApp add [abst,abst2]
+-- doubleVar = AFS.abs x sucx
 
-abst = AFS.abs (AFS.var "u") (AFS.var "u")
+abst = AFS.abs x x
 
-abst2 = AFS.abs x (AFS.abs y (AFS.app x y))
+-- abst2 = AFS.abs x (AFS.abs y (AFS.app x y))
 
-t1 = AFS.abs x (AFS.abs y (AFS.app x y))
-t2 = AFS.abs z (AFS.app (AFS.abs x x) (AFS.abs y y))
+-- t1 = AFS.abs x (AFS.abs y (AFS.app x y))
+-- t2 = AFS.abs z (AFS.app (AFS.abs x x) (AFS.abs y y))
 
-betaT2 = AFS.abs z (AFS.abs y y)
+-- betaT2 = AFS.abs z (AFS.abs y y)
 
-mapT = AFS.fApp mapS [(AFS.var "f"), (AFS.var "l")]
+-- mapT = AFS.fApp mapS [(AFS.var "f"), (AFS.var "l")]
 
-omega = AFS.app (AFS.abs x (AFS.app x x)) (AFS.abs x (AFS.app x x))
+-- mapL = AFS.abs f (AFS.abs l mapT)
+
+-- omega = AFS.app (AFS.abs x (AFS.app x x)) (AFS.abs x (AFS.app x x))
 
 -- Declaring variables types
 xas = ST.declareType x nat

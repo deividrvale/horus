@@ -31,6 +31,8 @@ module Term.AFS (
     genTypeEq,
     appSub,
     ctxRenaming
+
+    -- * Development Only Exposure
   )
 where
 import Type.SimpleTypes as ST
@@ -144,7 +146,7 @@ index t = case t of
 shift :: Term -> Int
 shift t = (IntSet.findMax $ index t) + 1
 
--- | Rename a free name x of t to a fresh name y not occurring anywhere in t.
+-- | Rename a free name x of t to a fresh name y.
 rename :: Term -> Name -> Name -> Term
 rename t x y = if Set.member x (freeNames t) then
         case t of
@@ -161,7 +163,7 @@ varRename t v = case v of
     Var name@(Name x i) -> rename t name (Name x (shift t))
     otherwise -> error "Fatal Error: Only variables can be renamed in a term. Please check the second argument of 'varRename'."
 
--- | Rename all binding occurences of a variable to a fresh one.
+-- | Rename all binding occurences of a variable in a term to a fresh one.
 bindingRename :: Term -> Term -> Term
 bindingRename t (Var v@(Name w i)) = let j = shift t in
     recRename t (Name w j)
@@ -188,7 +190,7 @@ ctxRenaming ctx t = let bs = Set.toList (ST.domain ctx `Set.intersection` bindin
 -- | The substitution of a variable x for a term s in t.
 -- Performance Note: Substitutions replace free variables only, testing this condition right away is less expensive.
 sub :: Term -> (Name, Term) -> Term
-sub t sub'@(x, s) = if Set.member x (freeNames t) then
+sub t sub'@(x, s) = if Set.member x  (freeNames t) then
         case t of
             Var name -> if name == x then s else t
             App m n -> App (sub m sub') (sub n sub')
@@ -212,16 +214,10 @@ instance ST.SimpleTypedCurry Term where
     declareType s@(FApp _ []) t = ST.newAssignment s t
     declareType _ _ = error "Fatal Error: Type declaration is only possible for variables and constants."
 
-    typeChecking ctx s tp = if IntSet.null (ST.var tp) then
-            let eq = ST.solveEq $ genTypeEq ctx (ctxRenaming ctx s) tp in
-                case eq of
-                    Nothing -> Left False
-                    Just _ -> Left True
-        else
-            let eq = ST.solveEq $ genTypeEq ctx (ctxRenaming ctx s) tp in
-                case eq of
-                    Nothing -> Left False
-                    Just subst -> Right (ST.typeSubst tp subst)
+    typeChecking ctx tm tp = do
+        eq <- return $ genTypeEq ctx (ctxRenaming ctx tm) tp
+        subst <- ST.solveEq eq
+        return $ ST.typeSubst tp subst
 
 -- | Generate type-equations to solve type-checking and typability problems.
 genTypeEq :: Context Term -> Term -> Type -> Maybe [(Type, Type)]
@@ -231,7 +227,7 @@ genTypeEq ctx (App m n) tp = (++) <$> genTypeEq ctx m (ST.newArrowType fname tp)
     where fname = fresh ctx tp
 
 -- There is a hidden assumption here: dom(ctx) intersected with bindingNames(tp) needs to be empty.
--- Whenever this function is called, proper renaming of bounded variables are in order.
+-- Whenever this function is called a proper renaming of bounded variables are in order.
 genTypeEq ctx (Abs name m) tp = (++) <$> genTypeEq ctx' m fname2 <*> pure [(ST.newArrowType fname1 fname2, tp)]
     where fname1 = ST.fresh ctx tp
           fname2 = ST.fresh ctx' tp
