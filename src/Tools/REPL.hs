@@ -2,8 +2,10 @@ module Tools.REPL where
 
 import Control.Monad.Trans
 import Data.List (isPrefixOf)
+import Data.Monoid
 import System.Console.Repline
-import System.Process
+import System.Process (callCommand)
+import Text.Read (get)
 
 type Repl a = HaskelineT IO a
 
@@ -11,50 +13,71 @@ type Repl a = HaskelineT IO a
 cmd :: String -> Repl ()
 cmd input = liftIO $ print input
 
--- Tab Completion: return a completion for partial words entered
-completer :: Monad m => WordCompleter m
-completer n = do
-  let names = ["kirk", "spock", "mccoy"]
-  return $ filter (isPrefixOf n) names
-
 -- Commands
-help :: [String] -> Repl ()
-help args = liftIO $ print $ "Help: " ++ show args
+help :: String -> Repl ()
+help args = liftIO $ putStrLn $ "Help: " ++ args
 
 say :: String -> Repl ()
 say args = do
-  _ <- liftIO $ callCommand $ "cowsay -p" ++ " " ++ args
+  _ <- liftIO $ callCommand $ "cowsay" ++ " " ++ args
   return ()
 
+load :: FilePath -> Repl ()
+load args = do
+  contents <- liftIO $ readFile args
+  liftIO $ putStrLn contents
+
+-- Options
 opts :: [(String, String -> Repl ())]
 opts =
-  [ ("help", help . words), -- :help
+  [ ("?", help), -- :help
+    ("load", load), -- :load
     ("say", say) -- :say
   ]
 
-ini :: Repl ()
-ini = liftIO $ putStrLn "This is Horus - Your favorite Higher-Order Rewriting Tool!"
+-- Tab Completion: return a completion for partial words entered
+completer :: Monad m => WordCompleter m
+completer n = do
+  let names = ["?", "spock", "mccoy"]
+  return $ filter (isPrefixOf n) names
 
+-- Completer
+defaultMatcher :: (MonadIO m) => [([Char], CompletionFunc m)]
+defaultMatcher =
+  [ -- Commands
+    (":load", fileCompleter),
+    (":?", wordCompleter completer)
+  ]
+
+byWord :: Monad m => WordCompleter m
+byWord n = do
+  let names = fmap ((":" <>) . fst) opts
+  return $ filter (isPrefixOf n) names
+
+-- Initialiser function
+ini :: Repl ()
+ini = liftIO $ putStrLn "This is Horus, version 0.1.0: https://github.com/deividrvale/horus    use :? for help"
+
+-- Finaliser function
 final :: Repl ExitDecision
 final = do
   liftIO $ putStrLn "Goodbye!"
   return Exit
 
-repl_alt :: IO ()
-repl_alt = evalReplOpts $ ReplOpts
-  { banner           = const $ pure ">>> "
-  , command          = cmd
-  , options          = opts
-  , prefix           = Just ':'
-  , multilineCommand = Just "paste"
-  , tabComplete      = (Word0 completer)
-  , initialiser      = ini
-  , finaliser        = final
-  }
-
 customBanner :: MultiLine -> Repl String
-customBanner SingleLine = pure ">>> "
+customBanner SingleLine = pure "λ> "
 customBanner MultiLine = pure "| "
 
 repl :: IO ()
-repl = evalRepl (const $ pure "λ >> ") cmd opts (Just ':') (Just "paste") (Word0 completer) ini final
+repl =
+  evalReplOpts $
+    ReplOpts
+      { banner = customBanner,
+        command = cmd,
+        options = opts,
+        prefix = Just ':',
+        multilineCommand = Just "paste",
+        tabComplete = (Prefix (wordCompleter byWord) defaultMatcher),
+        initialiser = ini,
+        finaliser = final
+      }

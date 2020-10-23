@@ -27,17 +27,15 @@ module Term.AFS (
     bindingVar,
 
     -- * Utilities
-    typeChecking,
-    genTypeEq,
-    appSub,
-    ctxRenaming
 
     -- * Development Only Exposure
   )
 where
-import Type.SimpleTypes as ST
+import qualified Type.SType as T
 import qualified Data.Set as Set
 import qualified Data.IntSet as IntSet
+
+import Control.Monad.Except
 
 {--------------------------------------------------------------------
   Datatypes
@@ -49,7 +47,7 @@ data Name = Name String Int
 instance Show Name where
   show (Name x n) = x ++ show n
 
-data FSymbol = FSymbol String [ST.Type] ST.Type
+data FSymbol = FSymbol String [T.Type] T.Type
   deriving (Eq, Ord)
 
 instance Show FSymbol where
@@ -57,8 +55,6 @@ instance Show FSymbol where
 
 data Term = Var Name | App Term Term | Abs Name Term | FApp FSymbol [Term]
   deriving (Eq, Ord)
-
-type Subst = [(Name, Term)]
 
 {--------------------------------------------------------------------
   Datatype Instances
@@ -107,10 +103,10 @@ fApp :: FSymbol -> [Term] -> Term
 fApp = FApp
 
 -- | Create a symbol signature.
-symbol :: String -> [ST.Type] -> Type -> FSymbol
+symbol :: String -> [T.Type] -> T.Type -> FSymbol
 symbol = FSymbol
 
-const :: String -> ST.Type -> Term
+const :: String -> T.Type -> Term
 const name tp = fApp (FSymbol name [] tp) []
 
 {--------------------------------------------------------------------
@@ -128,7 +124,7 @@ freeNames t = case t of
 -- | Return the set of binding names in a term.
 bindingVar :: Term -> (Set.Set Term)
 bindingVar t = case t of
-    Var n -> Set.empty
+    Var {} -> Set.empty
     App m n -> Set.union (bindingVar m) (bindingVar n)
     Abs n m -> Set.union (Set.singleton (Var n)) (bindingVar m)
     FApp _ args -> foldl Set.union Set.empty (map bindingVar args)
@@ -157,90 +153,87 @@ rename t x y = if Set.member x (freeNames t) then
     else
         t
 
--- | Rename a free variable x of t to a fresh var y not occurring anywhere in t.
-varRename :: Term -> Term -> Term
-varRename t v = case v of
-    Var name@(Name x i) -> rename t name (Name x (shift t))
-    otherwise -> error "Fatal Error: Only variables can be renamed in a term. Please check the second argument of 'varRename'."
+-- -- | Rename a free variable x of t to a fresh var y not occurring anywhere in t.
+-- varRename :: Term -> Term -> Term
+-- varRename t v = case v of
+--     Var name@(Name x _) -> rename t name (Name x (shift t))
+--     otherwise -> error "Fatal Error: Only variables can be renamed in a term. Please check the second argument of 'varRename'."
 
--- | Rename all binding occurences of a variable in a term to a fresh one.
-bindingRename :: Term -> Term -> Term
-bindingRename t (Var v@(Name w i)) = let j = shift t in
-    recRename t (Name w j)
-    where recRename term freshName =
-            case term of
-                Var _ -> term
-                App m n -> App (recRename m freshName) (recRename n freshName)
-                Abs z m -> if z == v then
-                    Abs freshName (recRename (rename m z freshName) freshName)
-                    else
-                        Abs z (recRename m freshName)
-                FApp f args -> FApp f (map (\t -> recRename t freshName) args)
-bindingRename _ _ = error "Fatal Error: Only variables can be renamed in a term. Please check the second argument of 'bindingRename'."
+-- -- | Rename all binding occurences of a variable in a term to a fresh one.
+-- bindingRename :: Term -> Term -> Term
+-- bindingRename t (Var v@(Name w i)) = let j = shift t in
+--     recRename t (Name w j)
+--     where recRename term freshName =
+--             case term of
+--                 Var _ -> term
+--                 App m n -> App (recRename m freshName) (recRename n freshName)
+--                 Abs z m -> if z == v then
+--                     Abs freshName (recRename (rename m z freshName) freshName)
+--                     else
+--                         Abs z (recRename m freshName)
+--                 FApp f args -> FApp f (map (\t -> recRename t freshName) args)
+-- bindingRename _ _ = error "Fatal Error: Only variables can be renamed in a term. Please check the second argument of 'bindingRename'."
 
--- | Rename all binding names of a term that also occurs in the context domain.
-ctxRenaming :: Context Term -> Term -> Term
-ctxRenaming ctx t = let bs = Set.toList (ST.domain ctx `Set.intersection` bindingVar t) in
-    rename t bs
-    where rename term bindingList =
-            case bindingList of
-                [] -> term
-                x : xs -> rename (bindingRename term x) xs
+-- -- | Rename all binding names of a term that also occurs in the context domain.
+-- ctxRenaming :: Context Term -> Term -> Term
+-- ctxRenaming ctx t = let bs = Set.toList (ST.domain ctx `Set.intersection` bindingVar t) in
+--     rename t bs
+--     where rename term bindingList =
+--             case bindingList of
+--                 [] -> term
+--                 x : xs -> rename (bindingRename term x) xs
 
 -- | The substitution of a variable x for a term s in t.
 -- Performance Note: Substitutions replace free variables only, testing this condition right away is less expensive.
-sub :: Term -> (Name, Term) -> Term
-sub t sub'@(x, s) = if Set.member x  (freeNames t) then
-        case t of
-            Var name -> if name == x then s else t
-            App m n -> App (sub m sub') (sub n sub')
-            Abs w@(Name y i) m -> if Set.member w (freeNames s) then
-                Abs w' (sub m' sub') else Abs w (sub m sub')
-                    where w' = Name y (shift t)
-                          m' = rename m w w'
-            FApp f args -> FApp f (map (\t -> sub t sub') args)
-    else t
+-- sub :: Term -> (Name, Term) -> Term
+-- sub t sub'@(x, s) = if Set.member x  (freeNames t) then
+--         case t of
+--             Var name -> if name == x then s else t
+--             App m n -> App (sub m sub') (sub n sub')
+--             Abs w@(Name y i) m -> if Set.member w (freeNames s) then
+--                 Abs w' (sub m' sub') else Abs w (sub m sub')
+--                     where w' = Name y (shift t)
+--                           m' = rename m w w'
+--             FApp f args -> FApp f (map (\t -> sub t sub') args)
+--     else t
 
-appSub :: Term -> (Term, Term) -> Term
-appSub t (Var x, s) = sub t (x, s)
+-- appSub :: Term -> (Term, Term) -> Term
+-- appSub t (Var x, s) = sub t (x, s)
 
-{--------------------------------------------------------------------
-  Implementation of Simple Types typeclass
---------------------------------------------------------------------}
-instance ST.SimpleTypedCurry Term where
-    axiom ctx asgn = ST.member asgn ctx
+instance T.Typable Term where
+    invRules exp = case exp of
+        v@(Var {}) -> do
+            tp <- T.liftLookupEnv v
+            return (tp, [])
 
-    declareType s@(Var _) t = ST.newAssignment s t
-    declareType s@(FApp _ []) t = ST.newAssignment s t
-    declareType _ _ = error "Fatal Error: Type declaration is only possible for variables and constants."
+        -- Constant case.
+        FApp (FSymbol _ [] tpC) [] -> do
+            return (tpC, [])
 
-    typeChecking ctx tm tp = do
-        eq <- return $ genTypeEq ctx (ctxRenaming ctx tm) tp
-        subst <- ST.solveEq eq
-        return $ ST.typeSubst tp subst
+        App m n -> do
+            (tpM, eqM) <- T.invRules m
+            (tpN, eqN) <- T.invRules n
+            freshType <- T.fresh
+            return (freshType, eqM ++ eqN ++ [(tpM, tpN `T.arrT` freshType)])
 
--- | Generate type-equations to solve type-checking and typability problems.
-genTypeEq :: Context Term -> Term -> Type -> Maybe [(Type, Type)]
-genTypeEq ctx v@(Var x) tp = (\t -> [(tp, t)]) <$> ST.getType ctx v
+        Abs x m -> do
+            freshType <- T.fresh
+            (tpM, eqM) <- T.liftLWeaken ((Var x), freshType) (T.invRules m)
+            return (freshType `T.arrT` tpM, eqM)
 
-genTypeEq ctx (App m n) tp = (++) <$> genTypeEq ctx m (ST.newArrowType fname tp) <*> genTypeEq ctx n fname
-    where fname = fresh ctx tp
+        FApp (FSymbol name sig tp) args -> do
+            if length sig == length args
+                then do
+                    list <- genSigConstraints (args, sig)
+                    return (tp, list)
+                else throwError $ T.FunctionAppMismatch name
 
--- There is a hidden assumption here: dom(ctx) intersected with bindingNames(tp) needs to be empty.
--- Whenever this function is called a proper renaming of bounded variables are in order.
-genTypeEq ctx (Abs name m) tp = (++) <$> genTypeEq ctx' m fname2 <*> pure [(ST.newArrowType fname1 fname2, tp)]
-    where fname1 = ST.fresh ctx tp
-          fname2 = ST.fresh ctx' tp
-          ctx' = ST.add (ST.declareType (Var name) fname1) ctx
-
-genTypeEq ctx (FApp (FSymbol _ sig a) args) tp = if length sig == length args
-    then
-       case (args, sig) of
-            ([], []) -> pure [(a, tp)]
-            (x : xs, t : ts) -> (++) <$> genTypeEq ctx x t <*> unfold (xs, ts)
-                where unfold ([], []) = pure [(a, tp)]
-                      unfold (x' : xs', t' : ts') = (++) <$> genTypeEq ctx x' t' <*> unfold (xs', ts')
-    else
-        Nothing
-
-
+-- | Aux. Function to invRules: Generate the list of equational constraints based
+-- on the function's signature.
+genSigConstraints :: ([Term], [T.Type]) -> T.Infer Term [T.TypeEq]
+genSigConstraints ([], []) = pure []
+genSigConstraints x = unfold x
+    where unfold (u : us, sig : sigs) = do
+            (tp, eq) <- T.invRules u
+            list <- (++) <$> (pure ([(tp,sig)] ++ eq)) <*> genSigConstraints (us, sigs)
+            return list
