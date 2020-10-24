@@ -23,8 +23,7 @@ data Coef = Coef Int String
     deriving (Eq, Ord, Show)
 
 -- | A polynomial structure over Integers.
--- Z
-data Pol = Num Int | M Coef [Name] | Add Pol Pol | Mult Pol Pol
+data Pol = Num Int | V Name | M Coef [Name] | Add Pol Pol | Mult Pol Pol | Exp Pol Int
     deriving (Eq, Ord, Show)
 
 
