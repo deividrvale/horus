@@ -5,12 +5,14 @@ import Z3.Monad
 script :: Z3 ()
 script = do
     a <- mkFreshIntVar "a"
-    b <- mkFreshIntVar "b"
-    c <- mkFreshIntVar "c"
+    b <- mkFreshIntVar "a"
+    aMb <- mkMul [a,b]
+    aAb <- mkAdd [a,b]
     _0 <- mkInteger 0
-    assert =<< a `mkLt` b
-    assert =<< c `mkGt` _0
+    _3 <- mkInteger 3
+    assert =<< aMb `mkLt` aAb
     assert =<< a `mkGt` _0
+    assert =<< b `mkGt` _0
 
 checkSat :: Z3 Result
 checkSat = do
@@ -27,13 +29,14 @@ getValue :: Z3 (Maybe Integer)
 getValue = do
     a <- mkFreshIntVar "a"
     b <- mkFreshIntVar "a"
-    c <- mkFreshIntVar "a"
+    aMb <- mkMul [a,b]
+    aAb <- mkAdd [a,b]
     _0 <- mkInteger 0
-    assert =<< a `mkLt` b
-    assert =<< c `mkGt` _0
+    assert =<< aMb `mkLt` aAb
     assert =<< a `mkGt` _0
+    assert =<< b `mkGt` _0
 
-    snd <$> (withModel $ (\m -> fromJust <$> evalInt m c))
+    snd <$> (withModel $ (\m -> fromJust <$> evalInt m a))
 
 
 

@@ -87,7 +87,7 @@ type Subst = Map.Map Name Type
 --------------------------------------------------------------------}
 instance Substitutable Subst Type where
     apply sub v@(Var x) = Map.findWithDefault v x sub
-    apply sub (Base x) = Base x
+    apply _ (Base x) = Base x
     apply sub (Arrow a b) = Arrow (apply sub a) (apply sub b)
 
 instance Substitutable Subst TypeEq where
@@ -191,9 +191,8 @@ toList (TypeEnv env) = Map.toList env
 -- Inference: generate a set of constraints to be solved by reversing
 -- the typing derivation rules.
 -- Constraint Solving: we get the generated constraints and solve them using unification.
--- After these two process we output an typerror a well-typed expression to
+-- After these two process we output a typerror a well-typed expression to
 -- the expression evaluator.
-
 
 -- | State of names used on type-inference.
 data InferState = InferState { count :: Int }

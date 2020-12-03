@@ -6,5 +6,5 @@ main :: IO ()
 main = do
     -- AFS.assertAFS
     -- ST.assertST
-    -- P.assertPol
-    Z.printResult
+    P.assertPol
+    -- Z.printResult

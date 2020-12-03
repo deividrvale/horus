@@ -1,29 +1,26 @@
 module UnitTest.Polynomial where
 
-import Polynomial.Pol
+import Polynomial.Poly
 
 assertPol :: IO ()
 assertPol = do
     putStrLn "\nPolynomial Unit Test:"
-    print pol1
-    -- print pol2
-    print $ reduce pol1
+    print poly
+    print $ simplify poly
 
 -- Very first examples of polynomials.
 -- Create Variable names: X, Y
-x = Name "X" 2
-y = Name "Y" 1
-
+x = V 1 $ Name 1
+y = V 1 $ Name 2
+z = V 1 $ Name 3
 -- Lets build some monomials for testing.
-x2 = M (Coef 1 "") [x]
-y1 = M (Coef 1 "") [y]
+x2 = x `Exp` 2
+y1 = y `Exp` 1
 
 -- Examples of polynomials
--- P(X) = 7X + 1 + 3
--- pol1 = (Num 1) `Mult` ((M (Coef 7 "") [x, y] `Add` Num 0) `Add` (Num 0 `Mult` x2))
-pol1 = (Num 1 `Add` x2) `Mult` Num 2
 
--- P(X,Y) = X^2(Y + 1)
-pol2 = Num 0 `Mult` (y1 `Add` Num 1)
+-- P(X) = a1(X1 + a1)^2 * X2
+-- poly = C 1 1 `Mult` ((x `Add` C 1 1) `Exp` 2) `Mult` y
 
-pol3 = pol1 `Mult` pol2
+-- Example Lankford paper
+poly = linear 2 2

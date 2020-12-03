@@ -51,6 +51,6 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -O
+    - -O2
     dependencies:
     - horus
