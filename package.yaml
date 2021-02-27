@@ -25,6 +25,7 @@ dependencies:
 - containers
 - hie-bios
 - mtl
+- MonadRandom
 - process
 - repline >= 0.4
 
