@@ -26,6 +26,8 @@ dependencies:
 - hie-bios
 - mtl
 - MonadRandom
+- transformers
+- lens
 - process
 - repline >= 0.4
 
