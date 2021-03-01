@@ -10,29 +10,27 @@ import Control.Monad.Trans.Maybe
 import Data.Maybe ( fromJust )
 import Data.List
 
+data AddTerm = Z | S AddTerm | A AddTerm AddTerm
+
+instance Show AddTerm where
+    show Z = "0"
+    show (S t) = "suc(" ++ show t ++ ")"
+    show (A s t) = "add(" ++ show s ++ "," ++ show t ++ ")"
 data Tree = Leaf | Branch Tree Tree
     deriving Show
-
-size :: Tree -> Int
-size Leaf = 1
-size (Branch l r) = 1 + size l + size r
-
--- Generates tree for training data.
-randomTree' :: (RandomGen g) => Rand g Tree
-randomTree' = do
-    r <- getRandom
-    if r < (1/2 :: Double)
-        then return Leaf
-        else Branch <$> randomTree' <*> randomTree'
-
-generateTreeData :: (RandomGen g) => Int -> Rand g [Int]
-generateTreeData n =
-    reverse . sort . map size <$> replicateM n randomTree'
-
---
 newtype GenM a = GenM
     { unGenM :: ReaderT (Int, Int) (StateT Int (MaybeT (Rand StdGen))) a }
     deriving (Functor, Applicative, Monad, Alternative, MonadPlus, MonadRandom, MonadState Int, MonadReader (Int, Int))
+
+-- size :: Tree -> Int
+-- size Leaf = 1
+-- size (Branch l r) = 1 + size l + size r
+
+size :: AddTerm -> Int
+size t = case t of
+    Z -> 1
+    S t' -> 1 + size t'
+    A t1 t2 -> size t1 + size t2
 
 runGenM :: Int -> Double -> GenM a -> IO (Maybe a)
 runGenM targetSize eps m = do
@@ -44,6 +42,12 @@ runGenM targetSize eps m = do
            . (runReaderT ?? (minSize, maxSize)) . unGenM
            $ m
 
+-- chooseBranch :: Double -> AddTerm -> AddTerm
+-- chooseBranch x
+--     | x <= (1/2 :: Double) = \t -> Z
+--     | x <= (3/4 :: Double) = \t -> S t
+--     | x >  (3/4 :: Double) =
+
 atom :: GenM ()
 atom = do
     (_, maxSize) <- ask
@@ -51,15 +55,17 @@ atom = do
     when (curSize >= maxSize) mzero
     put (curSize + 1)
 
-genTreeUB :: GenM Tree
+genTreeUB :: GenM AddTerm
 genTreeUB = do
+    -- R is uniformly distributed
     r <- getRandom
     atom
-    if r <= (1/2 :: Double)
-        then return Leaf
-        else Branch <$> genTreeUB <*> genTreeUB
+    let choose | r >= (0.4 :: Double) = A <$> genTreeUB <*> genTreeUB
+               | r > (0.2 :: Double) = S <$> genTreeUB
+               | otherwise = return Z
+    choose
 
-genTreeLB :: GenM Tree
+genTreeLB :: GenM AddTerm
 genTreeLB = do
     put 0
     t <- genTreeUB
@@ -68,15 +74,11 @@ genTreeLB = do
     guard $ tSize >= minSize
     return t
 
-newGenTree :: GenM Tree
+newGenTree :: GenM AddTerm
 newGenTree = genTreeLB `mplus` newGenTree
 
 --
 assertRandomTree :: IO ()
 assertRandomTree = do
-    putStrLn "\n Generating trees completly random."
-    dumb <- evalRandIO (generateTreeData 100)
-    print dumb
-    putStrLn "\n Generating trees (n * log n) with (linearly) distrubuted sizes."
-    smarter <- map size . fromJust <$> runGenM 100 0.1 (replicateM (10^4) newGenTree)
-    print smarter
+    trees <- map show . fromJust <$> runGenM 15 0.1 (replicateM (10^5) newGenTree)
+    print trees
