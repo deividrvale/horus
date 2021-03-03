@@ -17,15 +17,9 @@ instance Show AddTerm where
     show Z = "0"
     show (S t) = "s " ++ show t
     show (A s t) = "+ " ++ show s ++ " " ++ show t
-data Tree = Leaf | Branch Tree Tree
-    deriving Show
 newtype GenM a = GenM
     { unGenM :: ReaderT (Int, Int) (StateT Int (MaybeT (Rand StdGen))) a }
     deriving (Functor, Applicative, Monad, Alternative, MonadPlus, MonadRandom, MonadState Int, MonadReader (Int, Int))
-
--- size :: Tree -> Int
--- size Leaf = 1
--- size (Branch l r) = 1 + size l + size r
 
 size :: AddTerm -> Int
 size t = case t of
