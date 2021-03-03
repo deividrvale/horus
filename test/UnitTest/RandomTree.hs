@@ -43,12 +43,6 @@ runGenM targetSize eps m = do
            . (runReaderT ?? (minSize, maxSize)) . unGenM
            $ m
 
--- chooseBranch :: Double -> AddTerm -> AddTerm
--- chooseBranch x
---     | x <= (1/2 :: Double) = \t -> Z
---     | x <= (3/4 :: Double) = \t -> S t
---     | x >  (3/4 :: Double) =
-
 atom :: GenM ()
 atom = do
     (_, maxSize) <- ask
@@ -101,16 +95,9 @@ dataFormat lhs nf = case (lhs, nf) of
     ([],[]) -> ""
     (s : xs, n : ns) -> show s ++ "\t" ++ show n ++ "\n" ++ dataFormat xs ns
 
--- steadlyGenerator :: (Int, Int) -> GenM AddTerm
-
-
-
 assertRandomTree :: IO ()
 assertRandomTree = do
-    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^6) newGenTree)
+    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^5) newGenTree)
     let nTree = map normalize trees
     let formatString = dataFormat trees nTree
-    print trees
-    print nTree
-    print formatString
-    writeFile "./rewriting.txt" formatString
+    writeFile "./data/rewriting.txt" formatString
