@@ -2,7 +2,7 @@
 
 module UnitTest.RandomTree where
 import Control.Applicative
-import Control.Lens ((??))
+import Control.Lens ((??), reuse)
 import Control.Monad.Random.Strict
 import Control.Monad.Reader
 import Control.Monad.State
@@ -11,11 +11,12 @@ import Data.Maybe ( fromJust )
 import Data.List
 
 data AddTerm = Z | S AddTerm | A AddTerm AddTerm
+    deriving Eq
 
 instance Show AddTerm where
     show Z = "0"
-    show (S t) = "suc(" ++ show t ++ ")"
-    show (A s t) = "add(" ++ show s ++ "," ++ show t ++ ")"
+    show (S t) = "s " ++ show t
+    show (A s t) = "+ " ++ show s ++ " " ++ show t
 data Tree = Leaf | Branch Tree Tree
     deriving Show
 newtype GenM a = GenM
@@ -77,8 +78,39 @@ genTreeLB = do
 newGenTree :: GenM AddTerm
 newGenTree = genTreeLB `mplus` newGenTree
 
---
+-- | Applies a function until a fix-point
+converge :: Eq a => (a -> a) -> a -> a
+converge = until =<< ((==) =<<)
+
+-- Apply add rules to add terms
+reduce :: AddTerm -> AddTerm
+reduce t = case t of
+    -- Reduction
+    A x Z -> reduce x
+    A x (S y) -> reduce (S $ A x y)
+    -- Compatibility
+    Z -> Z
+    S x -> S (reduce x)
+    A x y -> A (reduce x) (reduce y)
+
+normalize :: AddTerm -> AddTerm
+normalize = converge reduce
+
+dataFormat :: [AddTerm] -> [AddTerm] -> String
+dataFormat lhs nf = case (lhs, nf) of
+    ([],[]) -> ""
+    (s : xs, n : ns) -> show s ++ "\t" ++ show n ++ "\n" ++ dataFormat xs ns
+
+-- steadlyGenerator :: (Int, Int) -> GenM AddTerm
+
+
+
 assertRandomTree :: IO ()
 assertRandomTree = do
-    trees <- map show . fromJust <$> runGenM 15 0.1 (replicateM (10^5) newGenTree)
+    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^6) newGenTree)
+    let nTree = map normalize trees
+    let formatString = dataFormat trees nTree
     print trees
+    print nTree
+    print formatString
+    writeFile "./rewriting.txt" formatString
