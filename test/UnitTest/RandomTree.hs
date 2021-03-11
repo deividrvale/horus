@@ -89,9 +89,17 @@ dataFormat lhs nf = case (lhs, nf) of
     ([],[]) -> ""
     (s : xs, n : ns) -> show s ++ "\t" ++ show n ++ "\n" ++ dataFormat xs ns
 
+-- experimental function showing how to concatenate n data generations with decreasing sizes.
+-- :-)
+expFunction :: Int -> Int -> IO [AddTerm]
+expFunction 0 _ = return []
+expFunction size replicate = do
+    (++) <$> (fromJust <$> runGenM size 0.509308127 (replicateM replicate newGenTree))  <*> expFunction (size - 1) replicate
+
 assertRandomTree :: IO ()
 assertRandomTree = do
-    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^4) newGenTree)
+    -- trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^4) newGenTree)
+    trees <- expFunction 20 (10^4)
     print "Data Generated."
     print "Normalizing elements of the dataset."
     let nTree = map normalize trees
