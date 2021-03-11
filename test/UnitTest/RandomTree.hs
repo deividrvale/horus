@@ -91,7 +91,11 @@ dataFormat lhs nf = case (lhs, nf) of
 
 assertRandomTree :: IO ()
 assertRandomTree = do
-    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^5) newGenTree)
+    trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^4) newGenTree)
+    print "Data Generated."
+    print "Normalizing elements of the dataset."
     let nTree = map normalize trees
+    print "Saving Data to file."
     let formatString = dataFormat trees nTree
     writeFile "./data/rewriting.txt" formatString
+    print "Data saved."
