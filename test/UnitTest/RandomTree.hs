@@ -111,8 +111,6 @@ expFunction size replicate_factor eps = do
     printSize size
     (++) <$> (fromJust <$> runGenM size eps (replicateM ((replicate_factor*size)^3) newGenTree))  <*> expFunction (floor $ fromIntegral size * (1 -eps) ) replicate_factor eps
 
-
-
 assertRandomTree :: IO ()
 assertRandomTree = do
     -- trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^4) newGenTree)
