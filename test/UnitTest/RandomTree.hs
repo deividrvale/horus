@@ -9,12 +9,14 @@ import Control.Monad.State
 import Control.Monad.Trans.Maybe
 import Data.Maybe ( fromJust )
 import Data.List
+import Debug.Trace
 
-data AddTerm = Z | S AddTerm | A AddTerm AddTerm
+data AddTerm = Z | X | S AddTerm | A AddTerm AddTerm
     deriving Eq
 
 instance Show AddTerm where
     show Z = "0"
+    show X = "x"
     show (S t) = "s " ++ show t
     show (A s t) = "+ " ++ show s ++ " " ++ show t
 newtype GenM a = GenM
@@ -41,6 +43,7 @@ atom :: GenM ()
 atom = do
     (_, maxSize) <- ask
     curSize <- get
+    -- get >>= traceShowM
     when (curSize >= maxSize) mzero
     put (curSize + 1)
 
@@ -49,8 +52,9 @@ genTreeUB = do
     -- R is uniformly distributed
     r <- getRandom
     atom
-    let choose | r >= (0.4 :: Double) = A <$> genTreeUB <*> genTreeUB
-               | r > (0.2 :: Double) = S <$> genTreeUB
+    let choose | r >= (0.5 :: Double) = A <$> genTreeUB <*> genTreeUB
+               | r > (0.4 :: Double) = S <$> genTreeUB
+               | r > (0.2 :: Double) = return X
                | otherwise = return Z
     choose
 
@@ -77,6 +81,7 @@ reduce t = case t of
     A x Z -> reduce x
     A x (S y) -> reduce (S $ A x y)
     -- Compatibility
+    X -> X
     Z -> Z
     S x -> S (reduce x)
     A x y -> A (reduce x) (reduce y)
@@ -89,21 +94,32 @@ dataFormat lhs nf = case (lhs, nf) of
     ([],[]) -> ""
     (s : xs, n : ns) -> show s ++ "\t" ++ show n ++ "\n" ++ dataFormat xs ns
 
+printSize :: Int -> IO()
+printSize size = do
+    putStrLn ("Size: " ++ show size ++ "\n")  
+
+printCurSize :: Int -> IO()
+printCurSize size = do
+    putStrLn ("CurSize: " ++ show size ++ "\n")  
+
 -- experimental function showing how to concatenate n data generations with decreasing sizes.
 -- :-)
-expFunction :: Int -> Int -> IO [AddTerm]
-expFunction 0 _ = return []
-expFunction size replicate = do
-    (++) <$> (fromJust <$> runGenM size 0.509308127 (replicateM replicate newGenTree))  <*> expFunction (size - 1) replicate
+expFunction :: Int -> Int -> Double -> IO [AddTerm]
+expFunction 0 _ _ = return []
+expFunction size replicate_factor eps = do
+    printSize size
+    (++) <$> (fromJust <$> runGenM size eps (replicateM ((replicate_factor*size)^3) newGenTree))  <*> expFunction (floor $ fromIntegral size * (1 -eps) ) replicate_factor eps
+
+
 
 assertRandomTree :: IO ()
 assertRandomTree = do
     -- trees <- fromJust <$> runGenM 15 0.509308127 (replicateM (10^4) newGenTree)
-    trees <- expFunction 20 (10^4)
-    print "Data Generated."
+    trees <- expFunction 10 (2) 0.509308127
+    print "Data Generated."     
     print "Normalizing elements of the dataset."
     let nTree = map normalize trees
     print "Saving Data to file."
     let formatString = dataFormat trees nTree
-    writeFile "./data/rewriting.txt" formatString
+    writeFile "./data/rewriting_with_variables.txt" formatString
     print "Data saved."
