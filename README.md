@@ -16,18 +16,3 @@ You can compile the project on any system that satisfies all dependencies below:
 * System build dependency: **Z3**, installation on Ubuntu is easy
 
         sudo apt-get install z3 libz3-dev
-
----
-
-## Note
-
-This is a ''toy'' project, hence do expect some naive implementation and even some non-standard development practice.
-I am working hard to minimize that as I learn more Haskell in the future; if you have some comments and suggestions feel free to contact me.
-
-I have two personal goal with this project:
-
-* Learn Haskell.
-
-* Build an implementation of pure mathematical notions in a functional language.
-
-All things considered, currently, efficiency is not my primary concern, but I do my best to run things as fast as possible.

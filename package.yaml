@@ -4,7 +4,7 @@ github:              "deividrvale/horus"
 license:             MIT
 author:              "Deivid Vale"
 maintainer:          "deividrodriguesvale@gmail.com"
-copyright:           "2020 Deivid Vale"
+copyright:           "2021 Deivid Vale"
 
 extra-source-files:
 - README.md
@@ -39,7 +39,7 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -O
+    - -O2
     dependencies:
     - horus
 
