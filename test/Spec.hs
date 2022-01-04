@@ -1,10 +1,23 @@
-import qualified UnitTest.AFS as AFS
-import qualified UnitTest.SimpleTypes as ST
-import qualified UnitTest.Polynomial as P
-import qualified UnitTest.Z3 as Z
+{-# LANGUAGE OverloadedStrings #-}
+import Data.Type.SType
+
+import Data.Text
+
 main :: IO ()
 main = do
-    -- AFS.assertAFS
-    -- ST.assertST
-    P.assertPol
-    -- Z.printResult
+    putStrLn "Nothing to test yet."
+    print (ack 10 3)
+
+y = Sort "nat"
+x = Arrow y (Arrow y y)
+
+testPattern :: Type -> Bool
+testPattern ty = case ty of
+    Sort "x" -> True
+    Arrow t t' -> False
+
+ack :: Int -> Int -> Int
+ack m n
+    | m == 0 = n + 1
+    | m > 0 && n == 0 = ack (m - 1) 1
+    | m > 0 && n > 0 = ack (m - 1) (ack m (n - 1))

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Test if an argument is provided and run the test command.
+if [ $# -eq 0 ]
+  then
+    stack build --test --haddock-deps --file-watch
+  else
+    stack build --test --haddock-deps --file-watch --args="$*"
+fi

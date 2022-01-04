@@ -22,7 +22,7 @@ module Polynomial.Poly where
     Note that each variable in the polynimal input is again a vector.
 -}
 
-data Name = Name Int
+newtype Name = Name Int
     deriving (Eq, Ord)
 
 -- | A multi-vector polynomial structure over integers.
