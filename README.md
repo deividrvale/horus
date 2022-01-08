@@ -11,7 +11,7 @@ You can compile the project on any system that satisfies all dependencies below:
 
 * [Stack](https://docs.haskellstack.org/en/stable/README/#how-to-install) package management,
 
-* GHC v8.8.3 — see [the Haskell Platform installation instructions](https://www.haskell.org/platform/linux.html#linux-generic),
+* GHC >= v8.10.7 — see [the Haskell Platform installation instructions](https://www.haskell.org/platform/linux.html#linux-generic),
 
 * System build dependency: **Z3**, installation on Ubuntu is easy
 

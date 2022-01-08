@@ -10,24 +10,30 @@ Portability : POSIX
 Here is a longer description of this module, containing some
 commentary with @some markup@.
 -}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeOperators #-}
 
-module Data.AST.Expr where
+module Data.AST.Expr (
+    -- * Type
+    Expr(..),
+
+    module Interface.Syntax.Terms
+) where
 
 import qualified Data.Set as Set
-import Class.Syntax.Terms
-import Class.Type.SimpleType
+import qualified Data.Map as M
+import qualified Prettyprinter as PP
+import qualified Data.Text as T
+
+import Interface.Syntax.Terms
 import Data.Type.SType
+import Data.Foldable ( Foldable(foldl') )
 
--- | This abstract type represent general expressions built using an AFS
--- (for now) syntax.
--- A Num constructor is added for Integer values.
+newtype Arity f ty = Ar (M.Map f ty)
 
+-- | Type for expressions to support both algebraic (uncurried) functions
+-- and curried symbols together with an abstraction and application constructor.
 data Expr v f =
-    Num Int
-    | Var v                       -- ^ Variables.
+    Var v                        -- ^ Variables.
+    | Sym f                      -- ^ d
     | Fun f [Expr v f]           -- ^ Function application.
     | Abs v (Expr v f)           -- ^ Abstraction.
     | App (Expr v f) (Expr v f)  -- ^ Application.
@@ -35,10 +41,10 @@ data Expr v f =
 
 instance Terms Expr where
     vars t = case t of
-        Num {} -> Set.empty
+        Sym _ -> Set.empty
         Var v -> Set.singleton v
         Fun f [] -> Set.empty
-        Fun _ args -> foldl Set.union Set.empty  (map vars args)
+        Fun _ args -> foldl' Set.union Set.empty  (map vars args)
         Abs v t -> Set.difference (vars t) (Set.singleton v)
         App s t -> Set.union (vars s) (vars t)
 
@@ -47,23 +53,37 @@ instance Terms Expr where
 
     returnVar v = Var v
 
-instance TermTypable Expr where
+instance (AxSimplyTyped v, AxSimplyTyped f) => SimplyTyped (Expr v f) where
     getType t = case t of
-        Var x -> return $ getAxTy x
-        Fun f [] -> return $ getAxTy f
+        Var x -> return $ getAxTy x -- axiomatic typing
+        Sym f -> return $ getAxTy f -- axiomatic typing
+        Fun f [] -> return $ getAxTy f --axiomatic typing
+        -- TODO: IMPORTANT: Implement this (it's not being using for AFS for now,
+        -- future Deivid will hate me for my lazyness... well, who cares... ;)
         Fun f (s : args) -> undefined
-        Abs x t -> mkArrow (getAxTy x) <$> getType t
+
+        -- x :: a               t :: b
+        -- ---------------------------
+        --    (Abs x t) :: a -> b
+        Abs x t -> Arrow (getAxTy x) <$> getType t
+
+        -- s :: lhs -> rhs      t :: tTy
+        -- -----------------------------
+        --          (App s t) :: rhs
         App s t -> do
-            sTy <- getType s
+            sTy <- getType s -- the type of s, it must be an arrow type
             tTy <- getType t
-            if isArr sTy -- Test if the type of an application is an arrow type.
-                then do
-                    lhs <- getLeft sTy
-                    rhs <- getRight sTy
-                    if lhs == tTy
-                        then do
-                            return rhs
-                    else
-                        Nothing
-            else
-                Nothing
+            case sTy of
+                Sort _ -> Nothing
+                Arrow lhs rhs -> do
+                    if lhs == tTy then
+                        return rhs
+                    else Nothing
+
+instance (PP.Pretty v, PP.Pretty f) => PP.Pretty (Expr v f) where
+    pretty e = case e of
+        Var v -> PP.pretty v
+        Sym f -> PP.pretty f
+        Fun f args -> PP.pretty f PP.<> PP.tupled [PP.pretty ti | ti <- args]
+        Abs v t -> PP.pretty ("λ" :: T.Text) PP.<> PP.pretty v PP.<> PP.parens (PP.pretty t)
+        App s t -> PP.parens (PP.pretty s PP.<+> PP.pretty t)

@@ -12,18 +12,15 @@ commentary with @some markup@.
 -}
 
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Class.Syntax.Terms where
+module Interface.Syntax.Terms where
 
 import qualified Data.Set as Set
 import qualified Data.IntSet as IntSet
-import Class.Type.SimpleType
 
 class Terms t where
     -- | ´vars s´ returns the list of all free variables occuring in s.
     vars :: (Eq v, Ord v) => t v f -> Set.Set v
-    pos  :: t v f -> IntSet.IntSet
     isVar :: t v f -> Bool
-    isHO :: (AxTypable v, AxTypable f, TermTypable t) => t v f -> Bool
-    -- | Injects a variable symbol into the term type.
     returnVar :: v -> t v f

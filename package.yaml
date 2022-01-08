@@ -4,7 +4,7 @@ github:              "deividrvale/horus"
 license:             MIT
 author:              "Deivid Vale"
 maintainer:          "deividrodriguesvale@gmail.com"
-copyright:           "2021 Deivid Vale"
+copyright:           "2022 Deivid Vale"
 
 extra-source-files:
 - README.md
@@ -17,11 +17,12 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/deividrvale/horus#readme>
+description: Please see the README on GitHub at <https://github.com/deividrvale/horus#readme>
 
 dependencies:
 - base >= 4.7 && < 5
 - text
+- prettyprinter >= 1.7.1
 - z3
 - containers
 - hie-bios
@@ -31,6 +32,9 @@ dependencies:
 
 library:
   source-dirs: src
+  default-extensions:
+    - OverloadedStrings
+    - PatternSynonyms
 
 executables:
   horus-exe:
@@ -48,6 +52,9 @@ tests:
   horus-test:
     main:                Spec.hs
     source-dirs:         test
+    default-extensions:
+      - OverloadedStrings
+      - PatternSynonyms
     ghc-options:
     - -threaded
     - -rtsopts

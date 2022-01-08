@@ -140,7 +140,7 @@ index t = case t of
 
 -- | Generate a fresh name index.
 shift :: Term -> Int
-shift t = (IntSet.findMax $ index t) + 1
+shift t = IntSet.findMax (index t) + 1
 
 -- | Rename a free name x of t to a fresh name y.
 rename :: Term -> Name -> Name -> Term
@@ -202,7 +202,7 @@ rename t x y = if Set.member x (freeNames t) then
 
 instance T.Typable Term where
     invRules exp = case exp of
-        v@(Var {}) -> do
+        v@Var {} -> do
             tp <- T.liftLookupEnv v
             return (tp, [])
 
@@ -218,7 +218,7 @@ instance T.Typable Term where
 
         Abs x m -> do
             freshType <- T.fresh
-            (tpM, eqM) <- T.liftLWeaken ((Var x), freshType) (T.invRules m)
+            (tpM, eqM) <- T.liftLWeaken (Var x, freshType) (T.invRules m)
             return (freshType `T.arrT` tpM, eqM)
 
         FApp (FSymbol name sig tp) args -> do
@@ -235,5 +235,4 @@ genSigConstraints ([], []) = pure []
 genSigConstraints x = unfold x
     where unfold (u : us, sig : sigs) = do
             (tp, eq) <- T.invRules u
-            list <- (++) <$> (pure ([(tp,sig)] ++ eq)) <*> genSigConstraints (us, sigs)
-            return list
+            (++) ((tp,sig) : eq) <$> genSigConstraints (us, sigs)
